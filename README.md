@@ -1,2 +1,2 @@
 # GoodBoy
-Application for students in School/ office to hide your lazy work
+Application for students in School/ office to hide their lazy work
