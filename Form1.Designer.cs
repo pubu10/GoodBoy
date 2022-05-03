@@ -46,11 +46,11 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(157, 149);
+            this.button1.Location = new System.Drawing.Point(164, 151);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(137, 23);
             this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
+            this.button1.Text = "Cheak Update";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -127,9 +127,9 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(253, 149);
+            this.button2.Location = new System.Drawing.Point(164, 180);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.Size = new System.Drawing.Size(137, 23);
             this.button2.TabIndex = 5;
             this.button2.Text = "About";
             this.button2.UseVisualStyleBackColor = true;
@@ -150,6 +150,7 @@
             this.Name = "Form1";
             this.Text = "Good Boy";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.contextMenuStrip1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
