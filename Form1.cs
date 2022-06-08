@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Deployment.Application;
 using System.Drawing;
@@ -287,7 +287,7 @@ namespace GoodBoy
 
         private void button2_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Develop By PUBUDU", "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Develop By PE4", "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

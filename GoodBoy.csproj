@@ -27,9 +27,9 @@
     <ProductName>GoodBoy</ProductName>
     <PublisherName>Pubudu</PublisherName>
     <SuiteName>PUBUDU</SuiteName>
-    <MinimumRequiredVersion>1.0.0.10</MinimumRequiredVersion>
+    <MinimumRequiredVersion>1.0.0.14</MinimumRequiredVersion>
     <AutorunEnabled>true</AutorunEnabled>
-    <ApplicationRevision>12</ApplicationRevision>
+    <ApplicationRevision>15</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
