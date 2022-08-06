@@ -287,7 +287,7 @@ namespace GoodBoy
 
         private void button2_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Develop By PE4", "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Develop By P U B U DU", "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
