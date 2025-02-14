@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System;
 using System.Deployment.Application;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -9,9 +10,7 @@ namespace GoodBoy
 {
     public partial class Form1 : Form
     {
-
         public delegate void Notify();  // delegate
-
 
         [DllImport("wtsapi32.dll")]
         private static extern bool WTSRegisterSessionNotification(IntPtr hWnd, int dwFlags);
@@ -31,7 +30,7 @@ namespace GoodBoy
         }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
+        private static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
         private const int SessionChangeMessage = 0x02B1;
         private const int SessionLockParam = 0x7;
@@ -46,14 +45,20 @@ namespace GoodBoy
             PreventSleep();
             Console.WriteLine("Runnig:");
             InitializeComponent();
+
+            InitializeInactivityCheckTimer();
+            lastMouseActivity = DateTime.Now;
+
+            // Set the global mouse hook
+            _mouseProc = HookCallback;
+            _hookID = SetHook(_mouseProc);
         }
 
-        void PreventSleep()
+        private void PreventSleep()
         {
             // Prevent Idle-to-Sleep (monitor not affected) (see note above)
             SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
         }
-
 
         protected override void WndProc(ref Message m)
         {
@@ -93,10 +98,9 @@ namespace GoodBoy
             //notifyIcon1.BalloonTipText = "Good Boy";//
             //notifyIcon1.BalloonTipTitle = "U Are Back";//
             //notifyIcon1.ShowBalloonTip(1000);
-
         }
 
-        void OnSessionLock()
+        private void OnSessionLock()
         {
             Console.WriteLine("Runnig:OnSessionLock");
 
@@ -104,17 +108,16 @@ namespace GoodBoy
             //notifyIcon1.BalloonTipText = "Good Boy";//
             //notifyIcon1.BalloonTipTitle = "BYE..";//
             //notifyIcon1.ShowBalloonTip(1000);
-
         }
 
         private void OnPowerChange(object s, PowerModeChangedEventArgs e)
         {
-
             switch (e.Mode)
             {
                 case PowerModes.Resume:
                     Console.WriteLine("Runnig:Resume");
                     break;
+
                 case PowerModes.Suspend:
                     Console.WriteLine("Runnig:Suspend");
 
@@ -124,13 +127,11 @@ namespace GoodBoy
                     notifyIcon1.ShowBalloonTip(1000);
 
                     break;
+
                 case PowerModes.StatusChange:
                     Console.WriteLine("Runnig:StatusChanged");
                     break;
             }
-
-
-
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -140,10 +141,8 @@ namespace GoodBoy
             Cursor.Position = new Point(Cursor.Position.X - 20, Cursor.Position.Y - 20);
             Cursor.Position = new Point(Cursor.Position.X - 20, Cursor.Position.Y - 20);
 
-
             InstallUpdateSyncWithInfo(true);
         }
-
 
         private void InstallUpdateSyncWithInfo(bool status)
         {
@@ -159,7 +158,6 @@ namespace GoodBoy
                     try
                     {
                         info = ad.CheckForDetailedUpdate();
-
                     }
                     catch (DeploymentDownloadException dde)
                     {
@@ -227,7 +225,6 @@ namespace GoodBoy
             }
             catch (Exception ex)
             {
-
                 MessageBox.Show(ex.Message, "opps:(", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -254,7 +251,6 @@ namespace GoodBoy
             notifyIcon1.BalloonTipText = "Minimized";//
             notifyIcon1.BalloonTipTitle = "Background running..";//
             notifyIcon1.ShowBalloonTip(1000);
-
         }
 
         private void reStartToolStripMenuItem_Click(object sender, EventArgs e)
@@ -277,12 +273,10 @@ namespace GoodBoy
                 reg.DeleteValue("Good Boy", true);
                 MessageBox.Show("Deleted", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
         }
 
         private void label1_Click(object sender, EventArgs e)
         {
-
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -292,16 +286,153 @@ namespace GoodBoy
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-
             SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
 
-            MessageBox.Show("Good Boy is now turn off.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            UnhookWindowsHookEx(_hookID);
+            activityTimer?.Stop();
+            inactivityCheckTimer?.Stop();
 
+            MessageBox.Show("Good Boy is now turn off.", "GoodBoy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             InstallUpdateSyncWithInfo(false);
         }
+
+        private Timer activityTimer;
+        private Timer inactivityCheckTimer;
+        private DateTime lastMouseActivity;
+
+        // Delegate and hook ID for global mouse hook
+        private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
+        private LowLevelMouseProc _mouseProc;
+        private IntPtr _hookID = IntPtr.Zero;
+
+      
+
+        private void InitializeInactivityCheckTimer()
+        {
+            inactivityCheckTimer = new Timer();
+            inactivityCheckTimer.Interval = 1000; // Check every second
+            inactivityCheckTimer.Tick += InactivityCheckTimer_Tick;
+            inactivityCheckTimer.Start();
+        }
+
+        private void InactivityCheckTimer_Tick(object sender, EventArgs e)
+        {
+            if ((DateTime.Now - lastMouseActivity).TotalMinutes >= 1)
+            {
+                if (activityTimer == null || !activityTimer.Enabled)
+                {
+                    InitializeActivityTimer();
+                }
+            }
+            else
+            {
+                if (activityTimer != null && activityTimer.Enabled)
+                {
+                    activityTimer.Stop();
+                }
+            }
+        }
+
+        private void InitializeActivityTimer()
+        {
+            activityTimer = new Timer();
+            activityTimer.Interval = 10000;
+            activityTimer.Tick += ActivityTimer_Tick;
+            activityTimer.Start();
+        }
+
+        private void ActivityTimer_Tick(object sender, EventArgs e)
+        {
+            SimulateMouseActivity();
+            RefreshTeams();
+        }
+
+        private void SimulateMouseActivity()
+        {
+            Cursor.Position = new Point(Cursor.Position.X + 1, Cursor.Position.Y + 1);
+            Cursor.Position = new Point(Cursor.Position.X - 1, Cursor.Position.Y - 1);
+        }
+
+        private void RefreshTeams()
+        {
+            var processes = Process.GetProcessesByName("ms-teams");
+
+            if (processes.Length == 0)
+            {
+                try
+                {
+                    Process.Start("ms-teams");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to start Teams: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                processes = Process.GetProcessesByName("ms-teams");
+            }
+
+            if (processes.Length > 0)
+            {
+                var teamsWindow = processes[0].MainWindowHandle;
+                if (teamsWindow != IntPtr.Zero)
+                {
+                    SetForegroundWindow(teamsWindow);
+                    SendKeys.SendWait("{F5}");
+                }
+                else
+                {
+                    Process.Start("ms-teams");
+                }
+            }
+        }
+
+        private IntPtr SetHook(LowLevelMouseProc proc)
+        {
+            using (Process curProcess = Process.GetCurrentProcess())
+            using (ProcessModule curModule = curProcess.MainModule)
+            {
+                return SetWindowsHookEx(WH_MOUSE_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+            }
+        }
+
+        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0)
+            {
+                lastMouseActivity = DateTime.Now;
+            }
+            return CallNextHookEx(_hookID, nCode, wParam, lParam);
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        private const int WH_MOUSE_LL = 14;
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            UnhookWindowsHookEx(_hookID);
+            activityTimer?.Stop();
+            inactivityCheckTimer?.Stop();
+            base.OnFormClosing(e);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }
