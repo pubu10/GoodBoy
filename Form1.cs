@@ -306,10 +306,9 @@ namespace GoodBoy
 
         // Delegate and hook ID for global mouse hook
         private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
+
         private LowLevelMouseProc _mouseProc;
         private IntPtr _hookID = IntPtr.Zero;
-
-      
 
         private void InitializeInactivityCheckTimer()
         {
@@ -434,5 +433,24 @@ namespace GoodBoy
 
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            adminStart adminStart = new adminStart();
+            adminStart.Show();
+        }
+
+        private void checkBoxTeams_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!checkBoxTeams.Checked)
+            {
+                activityTimer?.Stop();
+                inactivityCheckTimer?.Stop();
+            }
+            else
+            {
+                InitializeInactivityCheckTimer();
+            }
+        }
     }
 }
