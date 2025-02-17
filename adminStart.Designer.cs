@@ -70,6 +70,7 @@
             this.txtAdminOpen.Name = "txtAdminOpen";
             this.txtAdminOpen.Size = new System.Drawing.Size(323, 20);
             this.txtAdminOpen.TabIndex = 2;
+            this.txtAdminOpen.TextChanged += new System.EventHandler(this.txtAdminOpen_TextChanged);
             // 
             // label2
             // 

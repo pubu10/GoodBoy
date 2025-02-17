@@ -67,23 +67,30 @@ namespace GoodBoy
             try
             {
                 OpenApp(txtAdminOpen.Text);
-                string NicName = ShowSaveConfirmationPopup();
                 var data = Read();
-                int max = 0;
 
-                if (data != null && data.Histories != null && data.Histories.Count > 0)
+                if (data.Histories.Find(x => x.Path == txtAdminOpen.Text) == null)
                 {
-                    max = data.Histories.Max(x => x.Id);
-                    data.Histories.Add(new History { Id = max + 1, NickName = NicName, });
-                }
-                else
-                {
-                    data.Histories = new List<History>();
-                    data.Histories.Add(new History { Id = max + 1, NickName = NicName, Path = txtAdminOpen.Text });
-                }
+                    string NicName = ShowSaveConfirmationPopup();
+                    if (NicName != string.Empty)
+                    {
+                        int max = 0;
 
-                SaveHistory(data);
-                MessageBox.Show("Saved.");
+                        if (data != null && data.Histories != null && data.Histories.Count > 0)
+                        {
+                            max = data.Histories.Max(x => x.Id);
+                            data.Histories.Add(new History { Id = max + 1, NickName = NicName, Path = txtAdminOpen.Text });
+                        }
+                        else
+                        {
+                            data.Histories = new List<History>();
+                            data.Histories.Add(new History { Id = max + 1, NickName = NicName, Path = txtAdminOpen.Text });
+                        }
+
+                        SaveHistory(data);
+                        MessageBox.Show("Saved.");
+                    }
+                }
 
                 BindUI();
             }
@@ -326,6 +333,18 @@ namespace GoodBoy
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtAdminOpen.Text = string.Empty;
+        }
+
+        private void txtAdminOpen_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                txtAdminOpen.Text = txtAdminOpen.Text.Replace("\"", "");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 
