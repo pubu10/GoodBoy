@@ -1,0 +1,65 @@
+name: .NET Core Desktop Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    
+    runs-on: windows-latest
+
+    env:
+      Solution_Name: GoodBoy.sln
+      Test_Project_Path: ""
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore Dependencies
+      run: dotnet restore $env:Solution_Name
+
+    - name: Build Solution
+      run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Run Unit Tests
+      if: env.Test_Project_Path != ''
+      run: dotnet test $env:Test_Project_Path --configuration $env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Decode and Save Signing Certificate (if needed)
+      if: env.Base64_Encoded_Pfx != ''
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
+        [IO.File]::WriteAllBytes("SigningCertificate.pfx", $pfx_cert_byte)
+      env:
+        Base64_Encoded_Pfx: ${{ secrets.Base64_Encoded_Pfx }}
+
+    - name: Remove Signing Certificate (Security Cleanup)
+      if: env.Base64_Encoded_Pfx != ''
+      run: Remove-Item SigningCertificate.pfx
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: GoodBoy Build
+        path: GoodBoy/bin/${{ matrix.configuration }}/
